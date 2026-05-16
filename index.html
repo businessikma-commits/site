@@ -410,7 +410,8 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: file.name,
-          mimeType: file.type || 'application/octet-stream'
+          mimeType: file.type || 'application/octet-stream',
+          size: file.size
         })
       });
 
@@ -424,6 +425,7 @@
         const xhr = new XMLHttpRequest();
         xhr.open('PUT', uploadUrl, true);
         xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+        xhr.setRequestHeader('Content-Range', `bytes 0-${file.size - 1}/${file.size}`);
 
         xhr.upload.onprogress = (event) => {
           if (!event.lengthComputable) return;
