@@ -6,14 +6,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { name, mimeType } = req.body || {};
+    const { name, mimeType, size } = req.body || {};
 
-    if (!name) {
-      return res.status(400).send('Nom du fichier manquant');
-    }
-
-    if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY || !process.env.GOOGLE_DRIVE_FOLDER_ID) {
-      return res.status(500).send('Variables Google manquantes dans Vercel');
+    if (!name || !size) {
+      return res.status(400).send('Nom ou taille du fichier manquant');
     }
 
     const auth = new google.auth.GoogleAuth({
@@ -28,10 +24,6 @@ export default async function handler(req, res) {
     const accessTokenResponse = await client.getAccessToken();
     const accessToken = accessTokenResponse?.token;
 
-    if (!accessToken) {
-      return res.status(500).send('Impossible de générer le token Google');
-    }
-
     const safeName = name.replace(/[\\/<>:"|?*]/g, '-');
     const finalName = `${new Date().toISOString().replace(/[:.]/g, '-')}_${safeName}`;
 
@@ -41,6 +33,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json; charset=UTF-8',
         'X-Upload-Content-Type': mimeType || 'application/octet-stream',
+        'X-Upload-Content-Length': String(size),
       },
       body: JSON.stringify({
         name: finalName,
